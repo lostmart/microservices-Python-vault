@@ -1,5 +1,5 @@
 <!-- This file replaced the original curriculum plan. See plan.md for the curriculum. -->
-# ShopMicro — Implementation Plan
+# GameHub — Implementation Plan
 
 Work through this one step at a time. Propose → approve → create. No bulk writes.
 
@@ -9,6 +9,20 @@ Work through this one step at a time. Propose → approve → create. No bulk wr
 - ✅ Done
 - 🔲 Not started
 - ⚠️ Partial / needs review
+
+---
+
+## Design decisions
+
+| Decision | Choice | Reason |
+|---|---|---|
+| Local DB (Modules 1–7) | SQLite via `aiosqlite` | Zero infra, same SQLAlchemy API as PostgreSQL |
+| Docker DB (Module 8+) | PostgreSQL via `asyncpg` | Students swap `DATABASE_URL` only — no code change |
+| Messaging | Kafka (events) + RabbitMQ (tasks) | Introduced via Docker infra only; services stay local until Module 8 |
+| notification-service runtime | Node.js, local, no Docker | Demonstrates polyglot microservices without burning laptop resources |
+| Observability instrumentation | Added in Module 9 as exercise | Not pre-scaffolded — students instrument live code |
+| Alembic migrations | Introduced as Module 2 exercise step | Not pre-scaffolded — students run `alembic init` themselves |
+| Auth middleware | Added in Module 6 as exercise | Inline in `main.py`; no standalone `security.py` until students extract it |
 
 ---
 
@@ -25,128 +39,143 @@ Work through this one step at a time. Propose → approve → create. No bulk wr
 | 1.7 | `infra/loki/loki-config.yaml` | ✅ |
 | 1.8 | `infra/promtail/promtail-config.yaml` | ✅ |
 | 1.9 | `infra/keycloak/realm-export.json` | ✅ |
-| 1.10 | `locustfile.py` | 🔲 (missing) |
+| 1.10 | `locustfile.py` | 🔲 |
 | 1.11 | `README.md` | ✅ |
 
 ---
 
 ## Phase 2 — user-service (`services/user-service/`)
 
+Runs locally with `uvicorn`. SQLite in Modules 1–7, PostgreSQL from Module 8.
+
+Concepts: FastAPI project layout, SQLAlchemy async models, Pydantic v2 schemas, repository pattern, basic CRUD.
+
 | # | File | Status |
 |---|---|---|
 | 2.1 | `requirements.txt` | 🔲 |
 | 2.2 | `Dockerfile` | 🔲 |
-| 2.3 | `alembic.ini` | 🔲 |
-| 2.4 | `alembic/env.py` | 🔲 |
-| 2.5 | `app/config.py` | 🔲 |
-| 2.6 | `app/domain/models.py` | 🔲 |
-| 2.7 | `app/application/schemas.py` | 🔲 |
-| 2.8 | `app/application/service.py` | 🔲 |
-| 2.9 | `app/infrastructure/database.py` | 🔲 |
-| 2.10 | `app/infrastructure/repository.py` | 🔲 |
-| 2.11 | `app/observability.py` | 🔲 |
-| 2.12 | `app/security.py` | 🔲 |
-| 2.13 | `app/main.py` | 🔲 |
-| 2.14 | `tests/test_users.py` | 🔲 |
+| 2.3 | `app/config.py` | 🔲 |
+| 2.4 | `app/models.py` | 🔲 |
+| 2.5 | `app/schemas.py` | 🔲 |
+| 2.6 | `app/service.py` | 🔲 |
+| 2.7 | `app/database.py` | 🔲 |
+| 2.8 | `app/main.py` | 🔲 |
+| 2.9 | `tests/test_users.py` | 🔲 |
 
 ---
 
-## Phase 3 — product-service (`services/product-service/`)
+## Phase 3 — game-service (`services/game-service/`)
+
+Runs locally with `uvicorn`. Adds Redis cache (Docker infra) from Module 5.
+
+Concepts: caching strategies, cache invalidation, Redis read model, CQRS intro.
 
 | # | File | Status |
 |---|---|---|
 | 3.1 | `requirements.txt` | 🔲 |
 | 3.2 | `Dockerfile` | 🔲 |
-| 3.3 | `alembic.ini` | 🔲 |
-| 3.4 | `alembic/env.py` | 🔲 |
-| 3.5 | `app/config.py` | 🔲 |
-| 3.6 | `app/domain/models.py` | 🔲 |
-| 3.7 | `app/application/schemas.py` | 🔲 |
-| 3.8 | `app/application/service.py` | 🔲 |
-| 3.9 | `app/infrastructure/database.py` | 🔲 |
-| 3.10 | `app/infrastructure/repository.py` | 🔲 |
-| 3.11 | `app/infrastructure/cache.py` | 🔲 |
-| 3.12 | `app/observability.py` | 🔲 |
-| 3.13 | `app/main.py` | 🔲 |
-| 3.14 | `tests/test_products.py` | 🔲 |
+| 3.3 | `app/config.py` | 🔲 |
+| 3.4 | `app/models.py` | 🔲 |
+| 3.5 | `app/schemas.py` | 🔲 |
+| 3.6 | `app/service.py` | 🔲 |
+| 3.7 | `app/database.py` | 🔲 |
+| 3.8 | `app/cache.py` | 🔲 |
+| 3.9 | `app/main.py` | 🔲 |
+| 3.10 | `tests/test_games.py` | 🔲 |
 
 ---
 
-## Phase 4 — order-service (`services/order-service/`)
+## Phase 4 — activity-service (`services/activity-service/`)
+
+Runs locally with `uvicorn`. Publishes Kafka events (Docker infra) from Module 4.
+Queries `logging-service` for consent before publishing any event.
+
+Concepts: event-driven design, Kafka producer, consent-gated event publishing, httpx inter-service call.
 
 | # | File | Status |
 |---|---|---|
 | 4.1 | `requirements.txt` | 🔲 |
 | 4.2 | `Dockerfile` | 🔲 |
-| 4.3 | `alembic.ini` | 🔲 |
-| 4.4 | `alembic/env.py` | 🔲 |
-| 4.5 | `app/config.py` | 🔲 |
-| 4.6 | `app/domain/models.py` | 🔲 |
-| 4.7 | `app/application/schemas.py` | 🔲 |
-| 4.8 | `app/infrastructure/database.py` | 🔲 |
-| 4.9 | `app/infrastructure/repository.py` | 🔲 |
-| 4.10 | `app/infrastructure/kafka_producer.py` | 🔲 |
-| 4.11 | `app/infrastructure/read_model.py` | 🔲 |
-| 4.12 | `app/infrastructure/circuit_breaker.py` | 🔲 |
-| 4.13 | `app/observability.py` | 🔲 |
-| 4.14 | `app/main.py` | 🔲 |
-| 4.15 | `tests/test_orders.py` | 🔲 |
+| 4.3 | `app/config.py` | 🔲 |
+| 4.4 | `app/models.py` | 🔲 |
+| 4.5 | `app/schemas.py` | 🔲 |
+| 4.6 | `app/service.py` | 🔲 |
+| 4.7 | `app/database.py` | 🔲 |
+| 4.8 | `app/events.py` | 🔲 |
+| 4.9 | `app/main.py` | 🔲 |
+| 4.10 | `tests/test_activity.py` | 🔲 |
 
 ---
 
-## Phase 5 — inventory-service (`services/inventory-service/`)
+## Phase 5 — notification-service (`services/notification-service/`)
+
+**Node.js. Runs locally. No Docker — ever.**
+Consumes RabbitMQ (Docker infra from Module 4). Stores notification records in SQLite.
+
+Concepts: polyglot microservices, RabbitMQ consumer, dead-letter queues, lightweight local services.
 
 | # | File | Status |
 |---|---|---|
-| 5.1 | `requirements.txt` | 🔲 |
-| 5.2 | `Dockerfile` | 🔲 |
-| 5.3 | `alembic.ini` | 🔲 |
-| 5.4 | `alembic/env.py` | 🔲 |
-| 5.5 | `app/config.py` | 🔲 |
-| 5.6 | `app/domain/models.py` | 🔲 |
-| 5.7 | `app/application/schemas.py` | 🔲 |
-| 5.8 | `app/infrastructure/database.py` | 🔲 |
-| 5.9 | `app/infrastructure/kafka_consumer.py` | 🔲 |
-| 5.10 | `app/observability.py` | 🔲 |
-| 5.11 | `app/main.py` | 🔲 |
-| 5.12 | `tests/test_inventory.py` | 🔲 |
+| 5.1 | `package.json` | 🔲 |
+| 5.2 | `app.js` | 🔲 |
+| 5.3 | `db.js` | 🔲 |
+| 5.4 | `consumer.js` | 🔲 |
+| 5.5 | `routes.js` | 🔲 |
+| 5.6 | `tests/test_notifications.js` | 🔲 |
 
 ---
 
-## Phase 6 — notification-service (`services/notification-service/`)
+## Phase 6 — logging-service (`services/logging-service/`)
 
-| # | File | Status |
-|---|---|---|
-| 6.1 | `requirements.txt` | 🔲 |
-| 6.2 | `Dockerfile` | 🔲 |
-| 6.3 | `app/config.py` | 🔲 |
-| 6.4 | `app/infrastructure/mongo.py` | 🔲 |
-| 6.5 | `app/infrastructure/rabbitmq_consumer.py` | 🔲 |
-| 6.6 | `app/observability.py` | 🔲 |
-| 6.7 | `app/main.py` | 🔲 |
-| 6.8 | `tests/test_notifications.py` | 🔲 |
+Runs locally with `uvicorn`. Consumes Kafka events (Docker infra from Module 4).
+GDPR-compliant: stores consent status in SQLite/PostgreSQL; writes audit events to a JSONL log file.
+
+Concepts: GDPR Art. 7/13/17/25, consent management, audit logging, feature gating, right to erasure, data minimisation (IP hashing).
+
+**Feature gating rule:** `activity-service` and `game-service` call `GET /consent/{user_id}` before publishing events or serving personalised content. No consent = no activity feed, no recommendations.
+
+| # | File | Notes | Status |
+|---|---|---|---|
+| 6.1 | `requirements.txt` | | 🔲 |
+| 6.2 | `Dockerfile` | | 🔲 |
+| 6.3 | `app/config.py` | Includes `AUDIT_LOG_PATH` env var | 🔲 |
+| 6.4 | `app/models.py` | `ConsentRecord` model | 🔲 |
+| 6.5 | `app/schemas.py` | Consent request/response + log entry shape | 🔲 |
+| 6.6 | `app/service.py` | Consent CRUD + erasure logic | 🔲 |
+| 6.7 | `app/database.py` | | 🔲 |
+| 6.8 | `app/consumer.py` | Kafka consumer → consent check → JSONL write | 🔲 |
+| 6.9 | `app/main.py` | `POST /consent/{user_id}`, `GET /consent/{user_id}`, `DELETE /logs/{user_id}` | 🔲 |
+| 6.10 | `tests/test_logging.py` | | 🔲 |
+
+**Audit log format** (JSONL, one entry per line, append-only):
+```json
+{"timestamp": "2025-03-01T10:00:00Z", "user_id": "abc123", "action": "game.viewed", "service": "game-service", "ip_hash": "e3b0c44..."}
+```
 
 ---
 
-## Phase 7 — Module files
+## Phase 7 — Module exercise files
 
-| # | File | Status |
-|---|---|---|
-| 7.1 | `modules/module-01/exercise.md` | ✅ |
-| 7.2 | `modules/module-02/exercise.md` | ✅ |
-| 7.3 | `modules/module-02/docker-compose.override.yml` | ✅ |
-| 7.4 | `modules/module-03/exercise.md` | ✅ |
-| 7.5 | `modules/module-03/docker-compose.override.yml` | ✅ |
-| 7.6 | `modules/module-04/exercise.md` | ✅ |
-| 7.7 | `modules/module-04/docker-compose.override.yml` | ✅ |
-| 7.8 | `modules/module-05/exercise.md` | ✅ |
-| 7.9 | `modules/module-06/exercise.md` | ✅ |
-| 7.10 | `modules/module-07/exercise.md` | ✅ |
-| 7.11 | `modules/module-08/exercise.md` | ✅ |
-| 7.12 | `modules/module-09/exercise.md` | ✅ |
-| 7.13 | `modules/module-09/docker-compose.override.yml` | ✅ |
-| 7.14 | `modules/module-10/exercise.md` | ✅ |
-| 7.15 | `modules/module-10/docker-compose.override.yml` | 🔲 |
+All exercise files are rewritten for GameHub. Docker override files are introduced per module as infra expands.
+
+| # | File | Docker introduced | Status |
+|---|---|---|---|
+| 7.1 | `modules/module-01/exercise.md` | None | ✅ |
+| 7.2 | `modules/module-02/exercise.md` | None | ✅ |
+| 7.3 | `modules/module-03/exercise.md` | None | ✅ |
+| 7.4 | `modules/module-04/exercise.md` | Kafka + RabbitMQ | ✅ |
+| 7.5 | `modules/module-04/docker-compose.override.yml` | | ✅ |
+| 7.6 | `modules/module-05/exercise.md` | Redis | ✅ |
+| 7.7 | `modules/module-05/docker-compose.override.yml` | | ✅ |
+| 7.8 | `modules/module-06/exercise.md` | Keycloak | ✅ |
+| 7.9 | `modules/module-06/docker-compose.override.yml` | | ✅ |
+| 7.10 | `modules/module-07/exercise.md` | None | ✅ |
+| 7.11 | `modules/module-08/exercise.md` | All services containerised | ✅ |
+| 7.12 | `modules/module-08/docker-compose.override.yml` | | ✅ |
+| 7.13 | `modules/module-09/exercise.md` | Observability stack | ✅ |
+| 7.14 | `modules/module-09/docker-compose.override.yml` | | ✅ |
+| 7.15 | `modules/module-10/exercise.md` | Full stack | ✅ |
+| 7.16 | `modules/module-10/docker-compose.override.yml` | | ✅ |
 
 ---
 
@@ -162,7 +191,7 @@ Work through this one step at a time. Propose → approve → create. No bulk wr
 | 8.6 | `helm/user-service/templates/configmap.yaml` | ✅ |
 | 8.7 | `helm/user-service/templates/ingress.yaml` | ✅ |
 | 8.8 | `.github/workflows/user-service.yml` | ✅ |
-| 8.9 | `.github/workflows/product-service.yml` | ✅ |
+| 8.9 | `.github/workflows/game-service.yml` | ✅ |
 
 ---
 
@@ -170,284 +199,30 @@ Work through this one step at a time. Propose → approve → create. No bulk wr
 
 | Phase | Description | Done |
 |---|---|---|
-| 1 | Infrastructure | 9/11 |
-| 2 | user-service | 0/14 |
-| 3 | product-service | 0/14 |
-| 4 | order-service | 0/15 |
-| 5 | inventory-service | 0/12 |
-| 6 | notification-service | 0/8 |
-| 7 | Module files | 14/15 |
+| 1 | Infrastructure | 10/11 |
+| 2 | user-service | 0/9 |
+| 3 | game-service | 0/10 |
+| 4 | activity-service | 0/10 |
+| 5 | notification-service (Node.js) | 0/6 |
+| 6 | logging-service (GDPR) | 0/10 |
+| 7 | Module exercise files | 16/16 |
 | 8 | Helm + CI/CD | 9/9 |
 
 **Next: Step 1.10 — `locustfile.py`**
 
 ---
 
-Full Technology Stack
-
-Core Framework
-
-┌────────────────────────┬───────────────────────────────────────────────┐
-│ Tool │ Role │
-├────────────────────────┼───────────────────────────────────────────────┤
-│ FastAPI │ Service framework (REST + async) │
-├────────────────────────┼───────────────────────────────────────────────┤
-│ SQLAlchemy 2.x (async) │ ORM │
-├────────────────────────┼───────────────────────────────────────────────┤
-│ Alembic │ DB migrations │
-├────────────────────────┼───────────────────────────────────────────────┤
-│ Pydantic v2 │ Validation / DTO schemas (built into FastAPI) │
-├────────────────────────┼───────────────────────────────────────────────┤
-│ uvicorn │ ASGI server │
-└────────────────────────┴───────────────────────────────────────────────┘
-
-Databases (Polyglot Persistence)
-
-┌────────────┬─────────────────────────────────────────────────┐
-│ Tool │ Role │
-├────────────┼─────────────────────────────────────────────────┤
-│ PostgreSQL │ Primary relational DB (all write-side services) │
-├────────────┼─────────────────────────────────────────────────┤
-│ Redis │ Distributed caching + read-side CQRS │
-├────────────┼─────────────────────────────────────────────────┤
-│ MongoDB │ Document store (notification-service demo) │
-└────────────┴─────────────────────────────────────────────────┘
-
-Inter-Service Communication
-
-┌─────────────────────────┬────────────────────────────────────────────────────────┐
-│ Tool │ Role │
-├─────────────────────────┼────────────────────────────────────────────────────────┤
-│ httpx (async) │ HTTP client for REST calls │
-├─────────────────────────┼────────────────────────────────────────────────────────┤
-│ grpcio + grpcio-tools │ gRPC exercise (one service pair) │
-├─────────────────────────┼────────────────────────────────────────────────────────┤
-│ RabbitMQ + aio-pika │ Task queues, pub-sub, dead-letter queues │
-├─────────────────────────┼────────────────────────────────────────────────────────┤
-│ Apache Kafka + aiokafka │ Event streaming, CQRS read projections, Event Sourcing │
-└─────────────────────────┴────────────────────────────────────────────────────────┘
-
-API Gateway
-
-┌─────────┬──────────────────────────────────────────────────────────────────────────────┐
-│ Tool │ Role │
-├─────────┼──────────────────────────────────────────────────────────────────────────────┤
-│ Traefik │ Reverse proxy + API gateway (Docker-native, integrates with Compose and K8s) │
-└─────────┴──────────────────────────────────────────────────────────────────────────────┘
-
-Security
-
-┌─────────────┬────────────────────────────────────────────────────┐
-│ Tool │ Role │
-├─────────────┼────────────────────────────────────────────────────┤
-│ Keycloak │ OAuth 2.0 + OpenID Connect provider (Docker image) │
-├─────────────┼────────────────────────────────────────────────────┤
-│ python-jose │ JWT decode/validate in FastAPI middleware │
-├─────────────┼────────────────────────────────────────────────────┤
-│ mkcert │ Local TLS certificates │
-└─────────────┴────────────────────────────────────────────────────┘
-
-Observability
-
-┌───────────────────────────────────┬───────────────────────────────────────────────────┐
-│ Tool │ Role │
-├───────────────────────────────────┼───────────────────────────────────────────────────┤
-│ OpenTelemetry Python SDK │ Unified instrumentation (traces + metrics + logs) │
-├───────────────────────────────────┼───────────────────────────────────────────────────┤
-│ prometheus-fastapi-instrumentator │ Auto metrics endpoint per service │
-├───────────────────────────────────┼───────────────────────────────────────────────────┤
-│ Prometheus │ Metrics scraper │
-├───────────────────────────────────┼───────────────────────────────────────────────────┤
-│ Grafana │ Dashboards │
-├───────────────────────────────────┼───────────────────────────────────────────────────┤
-│ Jaeger │ Distributed trace UI │
-├───────────────────────────────────┼───────────────────────────────────────────────────┤
-│ Loki + Promtail │ Centralized log aggregation │
-└───────────────────────────────────┴───────────────────────────────────────────────────┘
-
-Resilience
-
-┌──────────────────────────────────────────┬────────────────────────────────────────┐
-│ Tool │ Role │
-├──────────────────────────────────────────┼────────────────────────────────────────┤
-│ tenacity │ Retry + exponential backoff │
-├──────────────────────────────────────────┼────────────────────────────────────────┤
-│ httpx timeouts + circuit-breaker pattern │ Manual CB implementation (educational) │
-└──────────────────────────────────────────┴────────────────────────────────────────┘
-
-Orchestration
-
-┌────────────────┬────────────────────────────────────────────────────┐
-│ Tool │ Role │
-├────────────────┼────────────────────────────────────────────────────┤
-│ Docker Compose │ Local dev environment (students already know this) │
-├────────────────┼────────────────────────────────────────────────────┤
-│ minikube / k3d │ Local Kubernetes cluster │
-├────────────────┼────────────────────────────────────────────────────┤
-│ Helm │ K8s templating │
-└────────────────┴────────────────────────────────────────────────────┘
-
-CI/CD & Testing
-
-┌─────────────────────────┬─────────────────────────────────────┐
-│ Tool │ Role │
-├─────────────────────────┼─────────────────────────────────────┤
-│ GitHub Actions │ Build → test → push image → deploy │
-├─────────────────────────┼─────────────────────────────────────┤
-│ pytest + pytest-asyncio │ Unit + integration tests │
-├─────────────────────────┼─────────────────────────────────────┤
-│ httpx (AsyncClient) │ FastAPI test client │
-├─────────────────────────┼─────────────────────────────────────┤
-│ Testcontainers-python │ Real DB/broker in integration tests │
-├─────────────────────────┼─────────────────────────────────────┤
-│ Locust │ Load / performance testing │
-└─────────────────────────┴─────────────────────────────────────┘
-
----
-
-10-Module Course Structure
-
-Module 1 — Microservices Fundamentals (theory-heavy)
-
-Topics: Monolith vs microservices trade-offs, Conway's Law, Domain-Driven Design, bounded contexts, CAP theorem basics
-Exercise: Decompose a given monolithic e-commerce spec into bounded contexts + define service contracts on paper
-Capstone step: Students define the "ShopMicro" service map and data ownership
-
----
-
-Module 2 — Service Design with FastAPI + DDD
-
-Topics: FastAPI project layout (domain / application / infrastructure layers), SQLAlchemy 2 async models, Alembic migrations, Pydantic v2 schemas as DTOs, repository pattern
-Exercise: Scaffold user-service and product-service with full CRUD + OpenAPI docs auto-generated
-Capstone step: user-service and product-service merged into ShopMicro repo
-
----
-
-Module 3 — Synchronous Communication (REST + gRPC intro)
-
-Topics: Service-to-service REST with httpx, OpenAPI contract-first design, gRPC basics (protobuf, codegen, unary call)
-Exercise: Connect order-service → user-service via REST; rewrite one internal call to gRPC to compare
-Capstone step: order-service created; REST communication between services wired up
-
----
-
-Module 4 — Asynchronous Messaging (RabbitMQ + Kafka)
-
-Topics: Message queues vs event streams, RabbitMQ exchanges/queues/DLQ with aio-pika, Kafka topics/partitions/consumer groups with aiokafka
-Exercise 1 (RabbitMQ): Order placement → notification queue → notification-service email mock
-Exercise 2 (Kafka): Order placed event → inventory-service consumer updates stock
-Capstone step: inventory-service and notification-service added
-
----
-
-Module 5 — Data Management (Polyglot, CQRS, Event Sourcing)
-
-Topics: Database-per-service pattern, polyglot persistence, CQRS with Redis read model, Event Sourcing with Kafka as event log
-Exercise: Implement order-service with PostgreSQL (commands) + Redis read projections + event replay from Kafka
-Capstone step: order-service refactored to CQRS; full event log in Kafka
-
----
-
-Module 6 — Security (OAuth 2.0, JWT, TLS)
-
-Topics: OAuth 2.0 flows (auth code, client credentials), OpenID Connect, Keycloak setup, JWT validation middleware in FastAPI, service-to-service auth, TLS with mkcert
-Exercise: Protect all endpoints behind Keycloak; implement login + token refresh; add M2M client credentials for internal calls
-Capstone step: All ShopMicro services secured
-
----
-
-Module 7 — API Design & Documentation
-
-Topics: OpenAPI/Swagger deep dive, versioning strategies (/v1/, headers), API changelog discipline, generating typed clients from spec
-Exercise: Generate a Python client SDK from product-service OpenAPI spec; write contract tests against it
-Capstone step: All services have versioned, documented APIs
-
----
-
-Module 8 — Docker + Kubernetes Deployment
-
-Topics: Multi-stage Dockerfiles, Docker Compose for dev (students extend existing knowledge), Kubernetes objects (Deployment, Service, ConfigMap, Secret, Ingress), Traefik as K8s Ingress controller, Helm chart authoring
-Exercise: Write Helm chart for user-service; deploy full ShopMicro to minikube
-Capstone step: ShopMicro running on minikube with Traefik ingress
-
----
-
-Module 9 — Observability (Metrics, Tracing, Logging)
-
-Topics: OpenTelemetry instrumentation, Prometheus scraping, Grafana dashboards, Jaeger trace waterfall, structured logging with Loki
-Exercise: Instrument all services; use Jaeger to trace a slow order request across 4 services and identify the bottleneck
-Capstone step: Full observability stack deployed alongside ShopMicro
-
----
-
-Module 10 — Resilience, Performance & CI/CD
-
-Topics: Circuit breaker pattern (implement with tenacity + state machine), bulkhead, Redis caching strategies + invalidation, Traefik rate limiting middleware, GitHub Actions pipeline (build → test → push → deploy), Strangler Fig  
- migration pattern
-Exercise 1: Add circuit breaker to order→inventory call; simulate inventory-service failure
-Exercise 2: Write full GitHub Actions pipeline for one service
-Capstone step: Complete ShopMicro with CI/CD pipeline; final presentation
-
----
-
-Capstone Project — "ShopMicro"
-
-┌──────────────────────┬───────────────────────────────────┬───────────────────┬─────────────────────┐
-│ Service │ Database │ Inbound │ Outbound │
-├──────────────────────┼───────────────────────────────────┼───────────────────┼─────────────────────┤
-│ api-gateway │ — │ HTTP │ Traefik → services │
-├──────────────────────┼───────────────────────────────────┼───────────────────┼─────────────────────┤
-│ user-service │ PostgreSQL │ REST │ — │
-├──────────────────────┼───────────────────────────────────┼───────────────────┼─────────────────────┤
-│ product-service │ PostgreSQL + Redis │ REST │ — │
-├──────────────────────┼───────────────────────────────────┼───────────────────┼─────────────────────┤
-│ order-service │ PostgreSQL (write) + Redis (read) │ REST │ Kafka events │
-├──────────────────────┼───────────────────────────────────┼───────────────────┼─────────────────────┤
-│ inventory-service │ PostgreSQL │ Kafka consumer │ — │
-├──────────────────────┼───────────────────────────────────┼───────────────────┼─────────────────────┤
-│ notification-service │ MongoDB │ RabbitMQ consumer │ — │
-├──────────────────────┼───────────────────────────────────┼───────────────────┼─────────────────────┤
-│ Keycloak │ (internal) │ OAuth flows │ JWT to all services │
-└──────────────────────┴───────────────────────────────────┴───────────────────┴─────────────────────┘
-
-Students build one service per module, wiring everything together incrementally.
-
----
-
-Infrastructure Docker Compose (provided as starter)
-
-Students receive a docker-compose.infra.yml with:
-
-- PostgreSQL (x3 databases)
-- Redis
-- MongoDB
-- RabbitMQ (with management UI)
-- Kafka + Zookeeper (or KRaft)
-- Keycloak
-- Prometheus + Grafana + Jaeger + Loki
-- Traefik
-
-Each module's service gets its own docker-compose.override.yml.
-
----
-
-Additional Tools Worth Mentioning (bonus/optional)
-
-- Celery — if students want a more opinionated task queue alternative to raw RabbitMQ
-- Istio / Linkerd — mention as advanced service mesh topic, not required
-- ArgoCD — GitOps alternative to GitHub Actions deploy step (bonus module)
-- OpenAPI Generator — client SDK generation exercise in Module 7
-
----
-
-Verification / Success Criteria
-
-By end of course, each student should be able to:
-
-1.  Run docker compose up and have all ShopMicro services healthy
-2.  Log in via Keycloak, place an order via REST, see inventory updated asynchronously, notification sent
-3.  Open Grafana and see per-service RED metrics (Rate, Errors, Duration)
-4.  Open Jaeger and see a full distributed trace for one order request
-5.  Trigger a service failure and show circuit breaker activating
-6.  Push a code change → GitHub Actions builds, tests, and deploys automatically
-    ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+## Full module cadence reference
+
+| Module | Services in scope | Docker containers active | Key deliverable |
+|---|---|---|---|
+| 01 | None — paper design | None | GameHub service map + bounded contexts |
+| 02 | user-service, game-service | None | CRUD APIs, SQLite, Pydantic schemas |
+| 03 | activity-service | None | REST inter-service call (activity → user), gRPC intro |
+| 04 | notification-service, activity-service | Kafka, RabbitMQ | Events published; notifications consumed |
+| 05 | logging-service, game-service | + Redis | GDPR consent flow; Redis cache on game-service |
+| 06 | All | + Keycloak | All endpoints protected; M2M client credentials |
+| 07 | All | No new containers | Versioned OpenAPI; generated Python client SDK |
+| 08 | All | All services + full infra | Dockerfiles; SQLite → PostgreSQL; Helm on minikube |
+| 09 | All | + Prometheus, Grafana, Jaeger, Loki | Distributed trace across 3 services in Jaeger |
+| 10 | All | Full stack | Circuit breaker demo; GitHub Actions pipeline live |
