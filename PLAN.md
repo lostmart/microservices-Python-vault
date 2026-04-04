@@ -38,10 +38,10 @@ Evolves incrementally across modules as an exercise — students add to `gateway
 |---|---|---|---|---|
 | 0.1 | `requirements.txt` | 3 | `fastapi`, `uvicorn`, `httpx` | 🔲 |
 | 0.2 | `app/config.py` | 3 | Service URLs from env vars | 🔲 |
-| 0.3 | `app/main.py` | 3 | Dumb router — path-based forwarding to all services | 🔲 |
+| 0.3 | `app/main.py` | 3 | Dumb router — path-based forwarding to all services; `GET /health` returns `{"status":"ok","service":"gateway"}` | 🔲 |
 | 0.4 | `app/main.py` | 6 | JWT validation before forwarding | 🔲 |
 | 0.5 | `app/main.py` | 7 | `/v1` vs `/v2` versioning routing | 🔲 |
-| 0.6 | `app/main.py` | 10 | Circuit breaker on downstream calls | 🔲 |
+| 0.6 | `app/main.py` | 10 | Circuit breaker on downstream calls; `GET /health` upgraded to aggregate per-service status | 🔲 |
 | 0.7 | `Dockerfile` | 8 | Containerised with other services | 🔲 |
 | 0.8 | `tests/test_gateway.py` | 3 | Basic routing smoke tests | 🔲 |
 
@@ -208,7 +208,7 @@ All exercise files are rewritten for GameHub. Docker override files are introduc
 | 7.6 | `modules/module-05/exercise.md` | Redis | ✅ |
 | 7.7 | `modules/module-05/docker-compose.override.yml` | | ✅ |
 | 7.8 | `modules/module-06/exercise.md` | No new Docker — auth-service (native FastAPI JWT) | ✅ |
-| 7.9 | `modules/module-06/docker-compose.override.yml` | Comment only — no containers added | 🔲 |
+| 7.9 | `modules/module-06/docker-compose.override.yml` | Comment only — no containers added | ✅ |
 | 7.10 | `modules/module-07/exercise.md` | URL versioning + contract tests (no SDK gen) | ✅ |
 | 7.11 | `modules/module-08/exercise.md` | All services containerised | ✅ |
 | 7.12 | `modules/module-08/docker-compose.override.yml` | | ✅ |
@@ -247,7 +247,7 @@ All exercise files are rewritten for GameHub. Docker override files are introduc
 | 5 | notification-service (Node.js) | 0/6 |
 | 6 | logging-service (GDPR) | 0/10 |
 | 6-B | auth-service (native JWT) | 0/6 |
-| 7 | Module exercise files | 16/16 ✅ |
+| 7 | Module exercise files | 16/16 ✅ (all docker-compose overrides present) |
 | 8 | Helm + CI/CD | 9/9 |
 
 **Next: Step 1.10 — `locustfile.py`**
