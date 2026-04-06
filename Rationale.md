@@ -15,7 +15,7 @@ Docker is introduced incrementally starting at Module 4, but only for **infrastr
 
 ## The Core Technology Stack
 
-The curriculum relies on **FastAPI** for service creation, chosen for its high concurrency and automatic OpenAPI documentation. To manage data effectively, it uses **polyglot persistence** — matching specific storage engines to the needs of each service:
+The curriculum relies on **FastAPI** for most service creation, with the exception of logging-service, which uses **Flask**. This deliberate polyglot choice demonstrates that microservices can be built with different frameworks and languages — the architecture is framework-agnostic. FastAPI was chosen for the majority of services for its high concurrency and automatic OpenAPI documentation. To manage data effectively, it uses **polyglot persistence** — matching specific storage engines to the needs of each service:
 
 - **SQLite**: Used for local development in Modules 1–7. Zero setup, no server process — each service gets its own `.db` file.
 - **PostgreSQL**: Used for structured ACID transactions in production (from Module 8 onward).
@@ -66,6 +66,7 @@ This is not just a compliance checkbox. It forces students to think about:
 - Event filtering at the consumer level (Kafka consumer skips events for non-consented users)
 - Data retention and deletion policies
 - The tension between "log everything for debugging" and "respect user privacy"
+- The logging-service is implemented in Flask (not FastAPI) to demonstrate that service teams can choose their own tech stack — the important thing is the API contract and message protocols, not the internal implementation.
 
 ---
 

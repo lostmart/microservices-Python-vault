@@ -9,7 +9,11 @@
       "Bash(rm studentsRepo/modules/module-02/docker-compose.override.yml studentsRepo/modules/module-03/docker-compose.override.yml)",
       "Bash(cd solution:*)",
       "Bash(base=\"/c/Users/$CM7100-M9DP4O11CIGV/Documents/EPITA-WORK/PROJECTS/MicroservicesWithPython/solution\")",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Read(//c/Users/$CM7100-M9DP4O11CIGV/Documents/EPITA-WORK/PROJECTS/MicroservicesWithPython/studentsRepo/solution/**)",
+      "Bash(for dir:*)",
+      "Bash(do echo:*)",
+      "Bash(done)"
     ]
   }
 }

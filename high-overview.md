@@ -48,7 +48,7 @@ Students write every line — no scaffolding, no starter code.
 | 8003 | activity-service | FastAPI / uvicorn |
 | 8004 | notification-service | Node.js (never containerized) |
 | 8005 | auth-service | FastAPI / uvicorn |
-| 8006 | logging-service | FastAPI / uvicorn |
+| 8006 | logging-service | Flask / WSGI |
 
 ---
 

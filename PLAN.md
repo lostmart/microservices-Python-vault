@@ -150,7 +150,7 @@ Concepts: polyglot microservices, RabbitMQ consumer, dead-letter queues, lightwe
 
 ## Phase 6 — logging-service (`services/logging-service/`)
 
-Runs locally with `uvicorn` on **port 8006**. Consumes Kafka events published by activity-service from Module 4 onward.
+Runs locally with `flask run` on **port 8006** (Flask / WSGI, not uvicorn). Consumes Kafka events published by activity-service from Module 4 onward.
 GDPR-compliant: stores consent status in SQLite/PostgreSQL; writes audit events to a JSONL log file.
 
 Concepts: GDPR Art. 7/13/17/25, consent management, audit logging, feature gating, right to erasure, data minimisation (IP hashing).

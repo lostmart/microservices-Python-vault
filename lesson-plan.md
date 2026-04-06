@@ -79,6 +79,8 @@
 ### Lesson 5 — CQRS, Redis & GDPR (Module 5)
 **Goals:** Separate read and write paths; implement the GDPR consent flow.
 
+> **Framework note:** logging-service uses Flask internally; auth-service (introduced in Lesson 6) uses FastAPI. Both are equally valid choices — the API contract is what matters, not the framework.
+
 - Theory: CQRS pattern, event sourcing intro, eventual consistency trade-offs
 - Add Redis: `docker compose -f docker-compose.infra.yml up -d redis`
 - Hands-on: Redis read projection on game-service; benchmark with `hey`

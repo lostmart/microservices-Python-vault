@@ -28,7 +28,6 @@ MicroservicesWithPython/              ← this vault (instructor-only)
 │
 ├── infra/                            ← configuration files for all infra services
 │   ├── postgres/init.sql
-│   ├── keycloak/realm-export.json
 │   ├── prometheus/prometheus.yml
 │   ├── grafana/provisioning/
 │   ├── loki/loki-config.yaml
@@ -96,7 +95,16 @@ Students work inside `studentsRepo/services/`, guided by `studentsRepo/modules/m
 
 ## Technology stack
 
-### Python services (user-service, game-service, activity-service, logging-service)
+### Python services
+
+Different services use different frameworks to demonstrate that microservices architectures are technology-agnostic. All services communicate via standard HTTP and message protocols.
+
+| Service | Framework |
+|---|---|
+| user-service, game-service, activity-service, auth-service | **FastAPI** |
+| logging-service | **Flask** |
+
+#### FastAPI services (user-service, game-service, activity-service, auth-service)
 
 | Tool | Role |
 |---|---|
@@ -108,9 +116,18 @@ Students work inside `studentsRepo/services/`, guided by `studentsRepo/modules/m
 | uvicorn | ASGI server |
 | httpx | Async HTTP client for inter-service REST calls |
 | python-jose | JWT decode and validation middleware |
-| aiokafka | Kafka producer/consumer (activity-service, logging-service) |
+| aiokafka | Kafka producer/consumer (activity-service) |
 | aio-pika | RabbitMQ client (notification-service bridge) |
 | tenacity | Retry + exponential backoff |
+
+#### logging-service (Flask)
+
+| Tool | Role |
+|---|---|
+| Flask | Service framework (REST, WSGI) |
+| SQLAlchemy | ORM — same models work with SQLite and PostgreSQL |
+| Flask-Migrate | Database migrations (Alembic under the hood) |
+| kafka-python | Kafka consumer (`activity.logged` events) |
 
 ### notification-service (Node.js — local only, no Docker)
 
@@ -135,7 +152,6 @@ Students work inside `studentsRepo/services/`, guided by `studentsRepo/modules/m
 | RabbitMQ | Background task queue, notification delivery | Module 4 |
 | Kafka + Zookeeper | Real-time event streaming, audit log feed | Module 4 |
 | Redis | Distributed cache + CQRS read model | Module 5 |
-| Keycloak | OAuth 2.0 + OpenID Connect provider | Module 6 |
 | Traefik | Reverse proxy + API gateway | Module 8 |
 | Prometheus + Grafana | Metrics scraping and dashboards | Module 9 |
 | Jaeger | Distributed trace UI | Module 9 |
@@ -163,7 +179,7 @@ Students work inside `studentsRepo/services/`, guided by `studentsRepo/modules/m
 | 03 | `activity-service` | None | REST via httpx, retries, gRPC intro |
 | 04 | `notification-service`, `activity-service` | Kafka + RabbitMQ infra only | Kafka vs RabbitMQ, dead-letter queues |
 | 05 | `logging-service`, `game-service` | + Redis infra | CQRS, Event Sourcing, GDPR consent, polyglot persistence |
-| 06 | All services | + Keycloak infra | OAuth 2.0, OpenID Connect, JWT middleware |
+| 06 | All services | No new containers | OAuth 2.0, JWT auth-service, role-based access control |
 | 07 | All services | No new containers | OpenAPI versioning, contract testing, SDK generation |
 | 08 | All services | **All services containerised** | Dockerfiles, PostgreSQL swap, Helm, minikube |
 | 09 | All services | + Observability stack | OpenTelemetry, Prometheus, Jaeger, Loki |
@@ -221,9 +237,6 @@ docker compose -f docker-compose.infra.yml up kafka zookeeper rabbitmq -d
 
 # Module 5 — add Redis
 docker compose -f docker-compose.infra.yml up redis -d
-
-# Module 6 — add Keycloak
-docker compose -f docker-compose.infra.yml up keycloak -d
 
 # Module 8 — full infra + containerised services
 docker compose -f docker-compose.infra.yml up -d
