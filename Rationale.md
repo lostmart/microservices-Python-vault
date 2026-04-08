@@ -35,7 +35,9 @@ The gateway evolves across modules as a teaching artifact:
 - **Module 7** — adds version routing: enforces supported API versions per resource
 - **Module 10** — adds circuit breakers: protects clients from cascading failures
 
-This progression was chosen over a ready-made tool (Traefik, Nginx) because students can read every line of it. There is no magic, no config file format to learn — just Python they already know. The key lesson at each step: downstream services never change, only the gateway grows.
+The custom FastAPI gateway was chosen as the course's application-level entry point because students can read every line of it. There is no magic, no config file format to learn — just Python they already know. The key lesson at each step: downstream services never change, only the gateway grows.
+
+**Traefik is also present** in `docker-compose.infra.yml`, but it plays a different role: it is infrastructure tooling, not the application gateway. Its purpose in this stack is to export Prometheus metrics and forward traces to Jaeger — making it part of the observability layer, not the routing layer. Traefik routes no application traffic in this course; the custom FastAPI gateway on port 8000 is the sole entry point for all client requests. Students will see Traefik listed in the infra compose file and in the Kubernetes Ingress manifest — in both cases it acts as a reverse proxy at the infrastructure boundary, a role that is distinct from the application-level gateway they are building.
 
 ---
 
